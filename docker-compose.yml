@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: youtube-analyzer-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - YOUTUBE_API_KEY=${YOUTUBE_API_KEY}
+      - DATABASE_URL=sqlite:///./videos.db
+      - ENVIRONMENT=production
+    volumes:
+      - ./backend:/app
+      - ./backend/videos.db:/app/videos.db
+    command: uvicorn main:app --host 0.0.0.0 --port 8000
+    networks:
+      - youtube-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: youtube-analyzer-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - REACT_APP_API_URL=http://localhost:8000
+    volumes:
+      - ./frontend/src:/app/src
+    depends_on:
+      - backend
+    networks:
+      - youtube-network
+
+networks:
+  youtube-network:
+    driver: bridge
+
+volumes:
+  db_data:
